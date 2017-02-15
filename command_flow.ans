@@ -1,0 +1,80 @@
+!this command flow is to display "heart" through heat conduction
+!
+finish
+/clear
+/filename,present2cloud_papal
+/prep7
+!====================size define
+row_n=30
+column_n=30
+*dim,gray_matrix,array,row_n,column_n
+!*do,i,1,row_n,1
+!	*do,j,1,column_n,1
+!		gray_matrix(i,j)=i+j
+!	*enddo
+!*enddo
+
+*vread,gray_matrix(1,1),heart_30_30,txt,,jik,column_n,row_n
+(30F6.1)
+!====================elememt type 
+et,1,plane77
+!====================material property
+!===================element size
+element_w=1
+element_h=1
+!===================points,materrial,element
+ele_n_i=0!element number index
+*do,i,1,row_n,1
+	*do,j,1,column_n,1
+	ele_n_i=ele_n_i+1
+	
+	mp,kxx,ele_n_i,1!+gray_matrix(i,j)
+	mp,kyy,ele_n_i,1!+gray_matrix(i,j)
+	mp,c,ele_n_i,0.01+10*gray_matrix(i,j)
+	mp,dens,ele_n_i,10
+	
+	
+	n,1+8*(ele_n_i-1),0+(j-1)*element_w,0-(i-1)*element_h,0
+	n,2+8*(ele_n_i-1),1+(j-1)*element_w,0-(i-1)*element_h,0
+	n,3+8*(ele_n_i-1),1+(j-1)*element_w,1-(i-1)*element_h,0
+	n,4+8*(ele_n_i-1),0+(j-1)*element_w,1-(i-1)*element_h,0
+	n,5+8*(ele_n_i-1),0.5+(j-1)*element_w,0-(i-1)*element_h,0
+	n,6+8*(ele_n_i-1),1+(j-1)*element_w,0.5-(i-1)*element_h,0
+	n,7+8*(ele_n_i-1),0.5+(j-1)*element_w,1-(i-1)*element_h,0
+	n,8+8*(ele_n_i-1),0+(j-1)*element_w,0.5-(i-1)*element_h,0
+	e,1+8*(ele_n_i-1),2+8*(ele_n_i-1),3+8*(ele_n_i-1),4+8*(ele_n_i-1),5+8*(ele_n_i-1),6+8*(ele_n_i-1),7+8*(ele_n_i-1),8+8*(ele_n_i-1)	
+	
+	emodif,ele_n_i,mat,ele_n_i
+	*enddo
+*enddo
+nummrg,node
+!===================inertial condition
+/sol
+nsel,s,loc,z,0
+ic,all,temp,0
+alls
+!===================boundary condition and load time step
+/sol
+delta_t=1
+n=50
+temp_a=0.5
+freq=0.01
+antype,trans
+trnopt,full
+
+*do,i,1,n,1
+	time,i*delta_t
+	nsel,s,loc,x,0
+	nsel,a,loc,x,column_n*element_w
+	nsel,a,loc,y,element_h
+	nsel,a,loc,y,(1-column_n)*element_h
+	d,all,,temp_a*(-sin(2*3.14*freq*i*delta_t)),,,,temp,,,,,
+	alls
+	solve
+*enddo
+
+save
+
+!/exit
+
+
